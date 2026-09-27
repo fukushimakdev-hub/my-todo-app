@@ -6,12 +6,13 @@ export type Todo = {
   id: string;
   title: string;
   isCompleted: boolean;
+  dueDate: string | null;
   createdAt: string;
 };
 
 export type ListTodosResponse = { todos: Todo[] } | { error: string };
 
-export type CreateTodoRequestBody = { title: string };
+export type CreateTodoRequestBody = { title: string; dueDate?: string | null };
 export type CreateTodoResponse = { todo: Todo } | { error: string };
 
 export async function GET() {
@@ -33,6 +34,7 @@ export async function GET() {
     id: row.id,
     title: row.title,
     isCompleted: row.isCompleted,
+    dueDate: row.dueDate,
     createdAt: row.createdAt,
   }));
 
@@ -61,6 +63,7 @@ export async function POST(request: Request) {
   const row = await db.asServiceRole().orm.public.Todo.create({
     userId: user.id,
     title,
+    dueDate: body.dueDate?.trim() || null,
   });
 
   return NextResponse.json<CreateTodoResponse>(
@@ -69,6 +72,7 @@ export async function POST(request: Request) {
         id: row.id,
         title: row.title,
         isCompleted: row.isCompleted,
+        dueDate: row.dueDate,
         createdAt: row.createdAt,
       },
     },
