@@ -1,0 +1,45 @@
+// use prisma-8
+
+namespace public {
+  model Todo {
+    id          Uuid              @id @default(uuid())
+    userId      Uuid              @map("user_id")
+    user        supabase:auth.AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+    title       String
+    isCompleted Boolean           @default(false) @map("is_completed")
+    createdAt   TimestamptzString @default(now()) @map("created_at")
+
+    @@map("todos")
+    @@rls
+  }
+
+  // authenticated users may read only their own todos.
+  policy_select todos_select_own {
+    target = Todo
+    roles  = [authenticated]
+    using  = "\"user_id\"::uuid = auth.uid()"
+  }
+
+  // authenticated users may create todos only for themselves.
+  policy_insert todos_insert_own {
+    target    = Todo
+    roles     = [authenticated]
+    withCheck = "\"user_id\"::uuid = auth.uid()"
+  }
+
+  // authenticated users may update only their own todos, and may not
+  // reassign a todo to another owner.
+  policy_update todos_update_own {
+    target    = Todo
+    roles     = [authenticated]
+    using     = "\"user_id\"::uuid = auth.uid()"
+    withCheck = "\"user_id\"::uuid = auth.uid()"
+  }
+
+  // authenticated users may delete only their own todos.
+  policy_delete todos_delete_own {
+    target = Todo
+    roles  = [authenticated]
+    using  = "\"user_id\"::uuid = auth.uid()"
+  }
+}

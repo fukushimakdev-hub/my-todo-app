@@ -1,0 +1,350 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.todos",
+    "label": "Create table \"todos\"",
+    "summary": "Creates table \"todos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "todos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"todos\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"todos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"todos\"",
+        "sql": "CREATE TABLE \"public\".\"todos\" (\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"is_completed\" bool DEFAULT false NOT NULL,\n  \"title\" text NOT NULL,\n  \"user_id\" uuid NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"todos\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"todos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.todos.todos_user_id_idx_6c952402",
+    "label": "Create index \"todos_user_id_idx_6c952402\" on \"todos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "todos_user_id_idx_6c952402",
+        "table": "todos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"todos_user_id_idx_6c952402\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"todos_user_id_idx_6c952402\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"todos_user_id_idx_6c952402\"",
+        "sql": "CREATE INDEX \"todos_user_id_idx_6c952402\" ON \"public\".\"todos\" (\"user_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"todos_user_id_idx_6c952402\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"todos_user_id_idx_6c952402\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.todos.todos_user_id_fkey",
+    "label": "Add foreign key \"todos_user_id_fkey\" on \"todos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "todos_user_id_fkey",
+        "table": "todos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"todos_user_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "todos_user_id_fkey",
+          "public",
+          "\"public\".\"todos\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"todos_user_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"todos\"\nADD CONSTRAINT \"todos_user_id_fkey\"\nFOREIGN KEY (\"user_id\")\nREFERENCES \"auth\".\"users\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"todos_user_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "todos_user_id_fkey",
+          "public",
+          "\"public\".\"todos\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rowLevelSecurity.public.todos",
+    "label": "Enable row-level security on \"todos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "rowLevelSecurity",
+        "name": "todos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "check RLS is not already enabled on \"todos\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND NOT (\"c\".\"relrowsecurity\"))) AS \"result\"",
+        "params": [
+          "public",
+          "todos"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "enable row-level security on \"todos\"",
+        "sql": "ALTER TABLE \"public\".\"todos\" ENABLE ROW LEVEL SECURITY"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify row-level security is enabled on \"todos\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"c\".\"relrowsecurity\")) AS \"result\"",
+        "params": [
+          "public",
+          "todos"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rlsPolicy.public.todos.todos_delete_own_07b8e963",
+    "label": "Create RLS policy \"todos_delete_own_07b8e963\" on \"todos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "rlsPolicy",
+        "name": "todos_delete_own_07b8e963",
+        "table": "todos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure RLS policy \"todos_delete_own_07b8e963\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_policies\" WHERE (\"schemaname\" = $1 AND \"tablename\" = $2 AND \"policyname\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "todos",
+          "todos_delete_own_07b8e963"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create RLS policy \"todos_delete_own_07b8e963\"",
+        "sql": "CREATE POLICY \"todos_delete_own_07b8e963\" ON \"public\".\"todos\" AS PERMISSIVE FOR DELETE TO authenticated USING (\"user_id\"::uuid = auth.uid())",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify RLS policy \"todos_delete_own_07b8e963\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_policies\" WHERE (\"schemaname\" = $1 AND \"tablename\" = $2 AND \"policyname\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "todos",
+          "todos_delete_own_07b8e963"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rlsPolicy.public.todos.todos_insert_own_a29795f4",
+    "label": "Create RLS policy \"todos_insert_own_a29795f4\" on \"todos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "rlsPolicy",
+        "name": "todos_insert_own_a29795f4",
+        "table": "todos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure RLS policy \"todos_insert_own_a29795f4\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_policies\" WHERE (\"schemaname\" = $1 AND \"tablename\" = $2 AND \"policyname\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "todos",
+          "todos_insert_own_a29795f4"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create RLS policy \"todos_insert_own_a29795f4\"",
+        "sql": "CREATE POLICY \"todos_insert_own_a29795f4\" ON \"public\".\"todos\" AS PERMISSIVE FOR INSERT TO authenticated WITH CHECK (\"user_id\"::uuid = auth.uid())",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify RLS policy \"todos_insert_own_a29795f4\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_policies\" WHERE (\"schemaname\" = $1 AND \"tablename\" = $2 AND \"policyname\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "todos",
+          "todos_insert_own_a29795f4"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rlsPolicy.public.todos.todos_select_own_f6830410",
+    "label": "Create RLS policy \"todos_select_own_f6830410\" on \"todos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "rlsPolicy",
+        "name": "todos_select_own_f6830410",
+        "table": "todos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure RLS policy \"todos_select_own_f6830410\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_policies\" WHERE (\"schemaname\" = $1 AND \"tablename\" = $2 AND \"policyname\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "todos",
+          "todos_select_own_f6830410"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create RLS policy \"todos_select_own_f6830410\"",
+        "sql": "CREATE POLICY \"todos_select_own_f6830410\" ON \"public\".\"todos\" AS PERMISSIVE FOR SELECT TO authenticated USING (\"user_id\"::uuid = auth.uid())",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify RLS policy \"todos_select_own_f6830410\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_policies\" WHERE (\"schemaname\" = $1 AND \"tablename\" = $2 AND \"policyname\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "todos",
+          "todos_select_own_f6830410"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rlsPolicy.public.todos.todos_update_own_2078ff49",
+    "label": "Create RLS policy \"todos_update_own_2078ff49\" on \"todos\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "rlsPolicy",
+        "name": "todos_update_own_2078ff49",
+        "table": "todos"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure RLS policy \"todos_update_own_2078ff49\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_policies\" WHERE (\"schemaname\" = $1 AND \"tablename\" = $2 AND \"policyname\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "todos",
+          "todos_update_own_2078ff49"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create RLS policy \"todos_update_own_2078ff49\"",
+        "sql": "CREATE POLICY \"todos_update_own_2078ff49\" ON \"public\".\"todos\" AS PERMISSIVE FOR UPDATE TO authenticated USING (\"user_id\"::uuid = auth.uid()) WITH CHECK (\"user_id\"::uuid = auth.uid())",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify RLS policy \"todos_update_own_2078ff49\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_policies\" WHERE (\"schemaname\" = $1 AND \"tablename\" = $2 AND \"policyname\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "todos",
+          "todos_update_own_2078ff49"
+        ]
+      }
+    ]
+  }
+]
