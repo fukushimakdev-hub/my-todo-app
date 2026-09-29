@@ -47,6 +47,7 @@ export async function PATCH(
       id: row.id,
       title: row.title,
       isCompleted: row.isCompleted,
+      dueDate: row.dueDate,
       createdAt: row.createdAt,
     },
   });

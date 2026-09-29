@@ -7,6 +7,7 @@ namespace public {
     user        supabase:auth.AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
     title       String
     isCompleted Boolean           @default(false) @map("is_completed")
+    dueDate     DateString?       @map("due_date")
     createdAt   TimestamptzString @default(now()) @map("created_at")
 
     @@map("todos")
